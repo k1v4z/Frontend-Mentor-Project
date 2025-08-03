@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Mentor Projects</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .project { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .project h3 { margin-top: 0; }
+        .project a { color: #007bff; text-decoration: none; }
+        .project a:hover { text-decoration: underline; }
+        .updated { background-color: #e8f5e8; border-color: #28a745; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Mentor Projects</h1>
+    <div id="projects"></div>
+    <script>
+        // This will be populated by the workflow
+    </script>
+</body>
+</html>
+<script>
+const projects = [{name:'blog-preview-card-main',updated:''},{name:'qr-code-component-main',updated:''},{name:'recipe-page-main',updated:'updated'},{name:'social-links-profile-main',updated:''}];
+
+const projectsDiv = document.getElementById('projects');
+projects.forEach(project => {
+    const div = document.createElement('div');
+    div.className = 'project' + (project.updated ? ' updated' : '');
+    div.innerHTML = `
+        <h3>${project.name} ${project.updated ? '🆕' : ''}</h3>
+        <a href="./${project.name}/" target="_blank">View Project</a>
+    `;
+    projectsDiv.appendChild(div);
+});
+</script>
+</body>
+</html>

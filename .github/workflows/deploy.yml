@@ -1,4 +1,4 @@
-name: Deploy Frontend Mentor Projects
+name: Deploy Only Changed Projects (Optimized)
 
 on:
   push:
@@ -12,16 +12,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch full history for git diff
+          fetch-depth: 0
 
-      - name: Detect changed projects
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-content
+          fetch-depth: 0
+        continue-on-error: true
+
+      - name: Setup gh-pages directory
+        run: |
+          # Create gh-pages directory if it doesn't exist
+          if [ ! -d "gh-pages-content" ]; then
+            echo "Creating new gh-pages directory..."
+            mkdir gh-pages-content
+            cd gh-pages-content
+            git init
+            git remote add origin ${{ github.server_url }}/${{ github.repository }}.git
+            git checkout -b gh-pages
+            cd ..
+          fi
+
+      - name: Detect and deploy changed projects
         id: detect
         run: |
           echo "Detecting changed projects..."
 
           # Get the previous commit SHA
           if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]; then
-            # First push to branch
             PREV_SHA="HEAD~1"
           else
             PREV_SHA="${{ github.event.before }}"
@@ -31,15 +51,33 @@ jobs:
           changed_dirs=$(git diff --name-only $PREV_SHA ${{ github.sha }} \
             | grep -E '^[^/]+/' \
             | cut -d'/' -f1 \
+            | grep -v -E '^(public|\.github|node_modules|gh-pages-content)$' \
             | sort -u)
 
           echo "Changed directories: $changed_dirs"
 
-          # Create public directory structure
-          mkdir -p public
+          projects_updated=()
 
-          # Create index.html for main page listing all projects
-          cat > public/index.html << 'EOF'
+          if [ -n "$changed_dirs" ]; then
+            # Copy only changed projects
+            for dir in $changed_dirs; do
+              if [ -f "$dir/index.html" ]; then
+                echo "🔄 Updating project: $dir"
+                
+                # Remove old version if exists
+                rm -rf "gh-pages-content/$dir"
+                
+                # Copy new version
+                mkdir -p "gh-pages-content/$dir"
+                cp -r "$dir"/* "gh-pages-content/$dir/"
+                
+                projects_updated+=("$dir")
+              fi
+            done
+            
+            # Update main index.html with all projects
+            echo "📝 Updating main index page..."
+            cat > gh-pages-content/index.html << 'EOF'
           <!DOCTYPE html>
           <html lang="en">
           <head>
@@ -47,122 +85,181 @@ jobs:
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <title>Frontend Mentor Projects</title>
               <style>
-                  body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-                  .project { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
-                  .project h3 { margin-top: 0; }
-                  .project a { color: #007bff; text-decoration: none; }
-                  .project a:hover { text-decoration: underline; }
-                  .updated { background-color: #e8f5e8; border-color: #28a745; }
+                  body { 
+                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                      max-width: 1200px; 
+                      margin: 0 auto; 
+                      padding: 20px;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      min-height: 100vh;
+                  }
+                  .container {
+                      background: white;
+                      border-radius: 10px;
+                      padding: 30px;
+                      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                  }
+                  h1 { 
+                      color: #333; 
+                      text-align: center; 
+                      margin-bottom: 30px;
+                      font-size: 2.5em;
+                  }
+                  .projects-grid {
+                      display: grid;
+                      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                      gap: 20px;
+                      margin-top: 30px;
+                  }
+                  .project { 
+                      background: #f8f9fa;
+                      padding: 20px; 
+                      border: 1px solid #e9ecef; 
+                      border-radius: 10px;
+                      transition: transform 0.3s ease, box-shadow 0.3s ease;
+                  }
+                  .project:hover {
+                      transform: translateY(-5px);
+                      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+                  }
+                  .project h3 { 
+                      margin-top: 0; 
+                      color: #495057;
+                      font-size: 1.3em;
+                  }
+                  .project a { 
+                      display: inline-block;
+                      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                      color: white;
+                      padding: 10px 20px;
+                      text-decoration: none; 
+                      border-radius: 5px;
+                      font-weight: 500;
+                      transition: opacity 0.3s ease;
+                  }
+                  .project a:hover { 
+                      opacity: 0.9;
+                  }
+                  .updated { 
+                      background: linear-gradient(135deg, #e8f5e8, #c8e6c9); 
+                      border-color: #28a745;
+                      position: relative;
+                  }
+                  .updated::before {
+                      content: "🆕 UPDATED";
+                      position: absolute;
+                      top: -10px;
+                      right: -10px;
+                      background: #28a745;
+                      color: white;
+                      padding: 5px 10px;
+                      border-radius: 15px;
+                      font-size: 0.8em;
+                      font-weight: bold;
+                  }
+                  .stats {
+                      text-align: center;
+                      margin-bottom: 20px;
+                      color: #666;
+                  }
               </style>
           </head>
           <body>
-              <h1>Frontend Mentor Projects</h1>
-              <div id="projects"></div>
+              <div class="container">
+                  <h1>🚀 Frontend Mentor Projects</h1>
+                  <div class="stats">
+                      <p>Total Projects: <span id="total-count">0</span> | Last Updated: <span id="last-updated"></span></p>
+                  </div>
+                  <div class="projects-grid" id="projects"></div>
+              </div>
+              
               <script>
-                  // This will be populated by the workflow
+                  // Get all project directories
+                  const projects = [
+          EOF
+            
+            # Get all existing project directories in gh-pages
+            all_projects=()
+            for dir in gh-pages-content/*/; do
+              if [ -d "$dir" ] && [ -f "$dir/index.html" ]; then
+                dirname=$(basename "$dir")
+                all_projects+=("$dirname")
+              fi
+            done
+            
+            # Add projects to JavaScript array
+            for project in "${all_projects[@]}"; do
+              is_updated=""
+              if echo "$changed_dirs" | grep -q "^$project$"; then
+                is_updated="true"
+              else
+                is_updated="false"
+              fi
+              echo "                      {name:'$project', updated:$is_updated}," >> gh-pages-content/index.html
+            done
+            
+            # Complete the HTML
+            cat >> gh-pages-content/index.html << EOF
+                  ];
+                  
+                  document.getElementById('total-count').textContent = projects.length;
+                  document.getElementById('last-updated').textContent = new Date().toLocaleString();
+                  
+                  const projectsDiv = document.getElementById('projects');
+                  projects.forEach(project => {
+                      const div = document.createElement('div');
+                      div.className = 'project' + (project.updated ? ' updated' : '');
+                      div.innerHTML = \`
+                          <h3>\${project.name.replace(/-/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</h3>
+                          <p>Frontend Mentor Challenge</p>
+                          <a href="./\${project.name}/" target="_blank">🔗 View Project</a>
+                      \`;
+                      projectsDiv.appendChild(div);
+                  });
               </script>
           </body>
           </html>
           EOF
 
-          projects_deployed=()
-          projects_updated=()
-
-          # Copy all projects (not just changed ones) to maintain full site
-          for dir in */; do
-            dir=${dir%/}  # Remove trailing slash
-            
-            # Skip certain directories
-            if [ "$dir" = "public" ] || [ "$dir" = ".github" ] || [ "$dir" = "node_modules" ]; then
-              echo "Skipping directory: $dir"
-              continue
-            fi
-            
-            if [ -f "$dir/index.html" ]; then
-              echo "Copying project: $dir"
-              mkdir -p "public/$dir"
-              cp -r "$dir"/* "public/$dir/"
-              projects_deployed+=("$dir")
-              
-              # Check if this project was changed
-              if echo "$changed_dirs" | grep -q "^$dir$"; then
-                projects_updated+=("$dir")
-                echo "Project $dir was updated"
-              fi
-            fi
-          done
-
-          # Generate projects list for index.html
-          projects_js="const projects = ["
-          for project in "${projects_deployed[@]}"; do
-            is_updated=""
-            if echo "$changed_dirs" | grep -q "^$project$"; then
-              is_updated="updated"
-            fi
-            projects_js="$projects_js{name:'$project',updated:'$is_updated'},"
-          done
-          projects_js="${projects_js%,}];"
-
-          # Update index.html with projects list
-          cat >> public/index.html << EOF
-          <script>
-          $projects_js
-
-          const projectsDiv = document.getElementById('projects');
-          projects.forEach(project => {
-              const div = document.createElement('div');
-              div.className = 'project' + (project.updated ? ' updated' : '');
-              div.innerHTML = \`
-                  <h3>\${project.name} \${project.updated ? '🆕' : ''}</h3>
-                  <a href="./\${project.name}/" target="_blank">View Project</a>
-              \`;
-              projectsDiv.appendChild(div);
-          });
-          </script>
-          </body>
-          </html>
-          EOF
+          else
+            echo "No project changes detected"
+          fi
 
           # Set outputs
-          echo "deployed=$(IFS=,; echo "${projects_deployed[*]}")" >> $GITHUB_OUTPUT
           echo "updated=$(IFS=,; echo "${projects_updated[*]}")" >> $GITHUB_OUTPUT
           echo "has_changes=$([ ${#projects_updated[@]} -gt 0 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
 
-          echo "Total projects: ${#projects_deployed[@]}"
-          echo "Updated projects: ${#projects_updated[@]}"
-
       - name: Deploy to GitHub Pages
         if: steps.detect.outputs.has_changes == 'true'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          commit_message: "Deploy updated projects: ${{ steps.detect.outputs.updated }}"
+        run: |
+          cd gh-pages-content
+
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Add and commit changes
+          git add .
+          git commit -m "Deploy updated projects: ${{ steps.detect.outputs.updated }} [skip ci]" || exit 0
+
+          # Push to gh-pages branch
+          git push origin gh-pages
 
       - name: Log deployment summary
         run: |
           echo "Deployment Summary:"
           echo "==================="
           if [ "${{ steps.detect.outputs.has_changes }}" == "true" ]; then
-            echo "Deployment completed"
+            echo "Deployment completed - Only updated projects deployed!"
             echo ""
             echo "Updated projects:"
             IFS=',' read -ra UPDATED <<< "${{ steps.detect.outputs.updated }}"
             for project in "${UPDATED[@]}"; do
               echo "   - $project"
+              echo "     🌐 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/$project/"
             done
             echo ""
-            echo "All deployed projects:"
-            IFS=',' read -ra DEPLOYED <<< "${{ steps.detect.outputs.deployed }}"
-            for project in "${DEPLOYED[@]}"; do
-              echo "   - $project"
-            done
-            echo ""
-            echo "Access your projects at:"
-            echo "   Main page: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
-            for project in "${UPDATED[@]}"; do
-              echo "   $project: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/$project/"
-            done
+            echo "🏠 Main page: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
           else
             echo "No projects were updated, skipping deployment"
           fi

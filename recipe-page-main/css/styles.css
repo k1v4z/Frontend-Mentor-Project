@@ -1,0 +1,240 @@
+@import "./reset.css";
+@import "./fonts.css";
+
+/* CSS Custom Properties */
+:root {
+  --white: hsl(0, 0%, 100%);
+  --stone-100: hsl(30, 54%, 90%);
+  --stone-150: hsl(30, 18%, 87%);
+  --stone-600: hsl(30, 10%, 34%);
+  --stone-900: hsl(24, 5%, 18%);
+  --brown-800: hsl(14, 45%, 36%);
+  --rose-800: hsl(332, 51%, 32%);
+  --rose-50: hsl(330, 100%, 98%);
+
+  /* Typography */
+  --font-primary: "Outfit";
+  --font-serif: "Young Serif";
+  --font-size-sm: 14px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+
+  /* Spacing */
+  --spacing-xs: 10px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 56px;
+
+  /* Border radius */
+  --radius-sm: 10px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/* Base styles */
+body {
+  background-color: var(--stone-100);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-primary);
+}
+
+/* Typography */
+h2 {
+  font-size: var(--font-size-xl);
+  font-family: var(--font-serif);
+  font-weight: 400;
+  color: var(--brown-800);
+}
+
+.recipe-title {
+  font-size: var(--font-size-2xl);
+  color: var(--stone-900);
+  font-family: var(--font-serif);
+  font-weight: 400;
+}
+
+.preparation-time-title {
+  color: var(--rose-800);
+  font-weight: 600;
+  font-size: var(--font-size-lg);
+}
+
+/* Layout components */
+.recipe-page {
+  background-color: var(--white);
+  max-width: 638px;
+  margin: 72px auto;
+  border-radius: var(--radius-lg);
+}
+
+@media (max-width: 400px) {
+  .recipe-page {
+    margin: 0;
+  }
+}
+
+.recipe-presentation-image {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-sm);
+}
+
+.recipe-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+.recipe-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.recipe-description,
+.nutrition-description {
+  font-size: var(--font-size-sm);
+  color: var(--stone-600);
+  font-weight: 400;
+}
+
+/* Preparation time section */
+.preparation-time-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  background-color: var(--rose-50);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-md);
+}
+
+.preparation-time-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0 var(--spacing-lg);
+}
+
+.preparation-time-item {
+  margin-left: var(--spacing-sm);
+  color: var(--stone-600);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+}
+
+.preparation-time-item strong {
+  font-weight: 700;
+}
+
+.preparation-time-list li::marker {
+  color: var(--rose-800);
+  font-size: 12px;
+}
+
+/* Content sections */
+.recipe-content-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.ingredients-container,
+.instructions-container,
+.nutrition-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Lists */
+.ingredients-list,
+.instructions-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0 20px;
+}
+
+.ingredient-item {
+  margin-left: var(--spacing-md);
+  color: var(--stone-600);
+  font-weight: 400;
+}
+
+.ingredients-list li {
+  color: var(--brown-800);
+  font-weight: 400;
+}
+
+.ingredients-list li::marker {
+  font-size: 12px;
+}
+
+.instruction-step {
+  font-weight: 400;
+  font-size: var(--font-size-sm);
+  margin-left: var(--spacing-md);
+  color: var(--stone-600);
+}
+
+.instructions-list strong {
+  color: var(--stone-600);
+  font-weight: 700;
+}
+
+.instructions-list li::marker {
+  font-weight: 600;
+  color: var(--brown-800);
+  font-size: var(--font-size-sm);
+}
+
+/* Nutrition table */
+.nutrition-table {
+  border-collapse: separate;
+  border-spacing: var(--spacing-lg) var(--spacing-lg);
+}
+
+.nutrition-element {
+  color: var(--stone-600);
+}
+
+.nutrition-quantity {
+  color: var(--brown-800);
+  font-weight: 600;
+}
+
+/* Dividers */
+.nutrition-table tr:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--spacing-sm) * -1);
+  height: 0.5px;
+  background-color: var(--stone-150);
+}
+
+.nutrition-table tr:not(:last-child) {
+  position: relative;
+}
+
+.recipe-content-details > *:not(:last-child) {
+  position: relative;
+  padding-bottom: 2rem;
+}
+
+.recipe-content-details > *:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.5px;
+  background-color: var(--stone-150);
+}
